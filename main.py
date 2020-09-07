@@ -44,6 +44,20 @@ def route():
     return {"message": "all good"}
 
 
+@app.get("/tasks")
+def route(
+    status: Optional[TaskStatus] = Query(None, description="Filter tasks by status.")
+):
+    global db
+
+    if status != None:
+        return {
+            taskUUID: task for taskUUID, task in db.items() if task.status == status
+        }
+
+    return db
+
+
 @app.post("/task", response_model=DatabaseTaskModel)
 async def create_task(
     task: InputTaskModel = Body(
