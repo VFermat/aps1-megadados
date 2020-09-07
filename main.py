@@ -22,7 +22,7 @@ class InputTaskModel(BaseModel):
 
 
 class DatabaseTaskModel(BaseModel):
-    uuid: UUID1 = Field(uuid.uuid1(), description="UUID of the newly created task.")
+    uuid: UUID1 = Field(..., description="UUID of the newly created task.")
     title: str = Field(
         ..., description="Title of the task.", min_length=3, max_length=120
     )
@@ -57,7 +57,8 @@ async def create_task(
 ):
     global db
 
-    dbTask = DatabaseTaskModel(**task.dict())
+    dbTask = DatabaseTaskModel(**task.dict(), uuid=uuid.uuid1())
+    print(dbTask)
     if dbTask.uuid not in db:
         db.update({dbTask.uuid: dbTask})
         return dbTask
