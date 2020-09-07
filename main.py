@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query, Body
-from pydantic import BaseModel, Field, ValidationError, validator
+from pydantic import BaseModel, Field, ValidationError, validator, UUID1
 from typing import Optional
 from enum import Enum
 import uvicorn
@@ -22,6 +22,7 @@ class InputTaskModel(BaseModel):
 
 
 class DatabaseTaskModel(BaseModel):
+    uuid: UUID1 = Field(uuid.uuid1(), description="UUID of the newly created task.")
     title: str = Field(
         ..., description="Title of the task.", min_length=3, max_length=120
     )
@@ -56,9 +57,7 @@ async def create_task(
 ):
     global db
 
-    task_uuid = uuid.uuid1()
     dbTask = DatabaseTaskModel(**task.dict())
-    if task_uuid not in db:
-        db.update({task_uuid: dbTask})
-
-    return db
+    if dbTask.uuid not in db:
+        db.update({dbTask.uuid: dbTask})
+        return dbTask
