@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Query, Body
-from pydantic import BaseModel, Field, ValidationError, validator, UUID1
-from typing import Optional, Dict
-from enum import Enum
-import uvicorn
 import uuid
+from enum import Enum
+from typing import Dict, Optional, List
+
+import uvicorn
+from fastapi import Body, FastAPI, Query, Response, status
+from pydantic import UUID1, BaseModel, Field, ValidationError, validator
 
 
 class TaskStatus(str, Enum):
@@ -29,7 +30,9 @@ class DatabaseTaskModel(BaseModel):
     description: str = Field(
         ..., description="Description of the task.", min_length=3, max_length=120
     )
-    status: TaskStatus = Field(TaskStatus.todo, description="Status of the task.")
+    status: TaskStatus = Field(
+        TaskStatus.todo, description="Status of the task.")
+
 
 class UpdateTaskModel(BaseModel):
     title: Optional[str] = Field(
@@ -38,7 +41,9 @@ class UpdateTaskModel(BaseModel):
     description: Optional[str] = Field(
         ..., description="New description of the task.", min_length=3, max_length=120
     )
-    status: Optional[TaskStatus] = Field(TaskStatus.todo, description="New status of the task.")
+    status: Optional[TaskStatus] = Field(
+        TaskStatus.todo, description="New status of the task.")
+
 
 class UpdateTaskOut(BaseModel):
     title: Optional[str] = Field(
@@ -54,6 +59,7 @@ class UpdateTaskOut(BaseModel):
         None, description="This item appears in the situation of nonexistent task with the given UUID."
     )
 
+
 app = FastAPI(
     title="Nollo CRUD",
     description="CRUD Simples para a APS1 da disciplina de Megadados.",
@@ -61,14 +67,25 @@ app = FastAPI(
 db = {}
 
 
-@app.get("/test")
+@app.get(
+    "/test",
+    summary="Healthcheck",
+    description= "Basic request to check if network is running"
+)
 def healthcheck():
     return {"message": "all good"}
 
 
-@app.get("/tasks")
+@app.get(
+    "/tasks",
+    summary="Retrieve tasks",
+    description="Used to retrieve information of tasks present on database. You can filter the request based on the status wanted",
+    response_description="List which contains all tasks based on the status wanted (all tasks created if no status sent)",
+    response_model=List[DatabaseTaskModel]
+)
 def get_task(
-    status: Optional[TaskStatus] = Query(None, description="Filter tasks by status.")
+    status: Optional[TaskStatus] = Query(
+        None, description="Filter tasks by status.")
 ):
     global db
 
@@ -80,7 +97,14 @@ def get_task(
     return [task for task in db.values()]
 
 
-@app.post("/task", response_model=DatabaseTaskModel)
+@app.post(
+    "/task",
+    summary="Create task",
+    description="Creates a task with specific title and description. All tasks are created with a default status, set to 'todo'",
+    response_description="Task inserted into database, which contains its Unique Id, used to perform Patch and Delete requests.",
+    response_model=DatabaseTaskModel,
+    status_code=201
+)
 async def create_task(
     task: InputTaskModel = Body(
         ...,
@@ -98,7 +122,13 @@ async def create_task(
         db.update({dbTask.uuid: dbTask})
         return dbTask
 
-@app.delete("/task/{task_id}")
+
+@app.delete(
+    "/task/{task_id}",
+    summary="Removes task",
+    description="Removes task from database, based on given Unique Id. If that Unique Id does not exist on DB, nothing is done",
+    status_code=204
+)
 async def delete_task(
     task_id: str = Query(
         ...,
@@ -111,8 +141,17 @@ async def delete_task(
     if UUID1(task_id) in db:
         del db[UUID1(task_id)]
 
-@app.patch("/task/{task_id}", response_model=UpdateTaskOut)
+
+@app.patch(
+    "/task/{task_id}", 
+    summary="Updates task",
+    description="Updates task with given Unique Id and new fields (available fields to be updated can be found on model bellow).",
+    response_description="Either task with updated values or message showing that no task with given Unique Id was found.",
+    response_model=UpdateTaskOut, 
+    response_model_exclude_unset=True
+)
 async def patch_task(
+    response: Response,
     task_id: str = Query(
         ...,
         description="Unique ID of the task you're patching",
@@ -133,9 +172,10 @@ async def patch_task(
     task = db.get(UUID1(task_id))
     if task is not None:
         task = task.dict()
-        task.update(**patch.dict())
+        task.update(**patch.dict(exclude_unset=True))
         dbTask = DatabaseTaskModel(**task)
         db.update({UUID1(task_id): dbTask})
         return dbTask
-        
+
+    response.status_code = status.HTTP_304_NOT_MODIFIED
     return {"message": f"no task with id {task_id}"}
