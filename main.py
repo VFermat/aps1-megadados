@@ -42,13 +42,17 @@ class UpdateTaskModel(BaseModel):
 
 class UpdateTaskOut(BaseModel):
     title: Optional[str] = Field(
-        ..., description="New title of the task.", min_length=3, max_length=120
+        None, description="New title of the task."
     )
     description: Optional[str] = Field(
-        ..., description="New description of the task.", min_length=3, max_length=120
+        None, description="New description of the task."
     )
-    status: Optional[TaskStatus] = Field(TaskStatus.todo, description="New status of the task.")
-    message: Optional[str] = Field(..., description="This item appears in the situation of nonexistent task with the given UUID.")
+    status: Optional[TaskStatus] = Field(
+        None, description="New status of the task."
+    )
+    message: Optional[str] = Field(
+        None, description="This item appears in the situation of nonexistent task with the given UUID."
+    )
 
 app = FastAPI(
     title="Nollo CRUD",
@@ -69,11 +73,11 @@ def get_task(
     global db
 
     if status != None:
-        return {
-            taskUUID: task for taskUUID, task in db.items() if task.status == status
-        }
+        return [
+            task for task in db.values() if task.status == status
+        ]
 
-    return db
+    return [task for task in db.values()]
 
 
 @app.post("/task", response_model=DatabaseTaskModel)
@@ -94,7 +98,20 @@ async def create_task(
         db.update({dbTask.uuid: dbTask})
         return dbTask
 
-@app.patch("/task/{task_id}", response_model=DatabaseTaskModel)
+@app.delete("/task/{task_id}")
+async def delete_task(
+    task_id: str = Query(
+        ...,
+        description="Unique ID of the task you're patching",
+        example=""
+    )
+):
+    global db
+
+    if UUID1(task_id) in db:
+        del db[UUID1(task_id)]
+
+@app.patch("/task/{task_id}", response_model=UpdateTaskOut)
 async def patch_task(
     task_id: str = Query(
         ...,
