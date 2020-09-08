@@ -58,12 +58,12 @@ db = {}
 
 
 @app.get("/test")
-def route():
+def healthcheck():
     return {"message": "all good"}
 
 
 @app.get("/tasks")
-def route(
+def get_task(
     status: Optional[TaskStatus] = Query(None, description="Filter tasks by status.")
 ):
     global db
@@ -90,13 +90,12 @@ async def create_task(
     global db
 
     dbTask = DatabaseTaskModel(**task.dict(), uuid=uuid.uuid1())
-    print(dbTask)
     if dbTask.uuid not in db:
         db.update({dbTask.uuid: dbTask})
         return dbTask
 
 @app.patch("/task/{task_id}", response_model=DatabaseTaskModel)
-async def create_task(
+async def patch_task(
     task_id: str = Query(
         ...,
         description="Unique ID of the task you're patching",
