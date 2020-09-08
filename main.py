@@ -22,7 +22,7 @@ class InputTaskModel(BaseModel):
 
 
 class DatabaseTaskModel(BaseModel):
-    uuid: UUID1 = Field(uuid.uuid1(), description="UUID of the newly created task.")
+    uuid: UUID1 = Field(..., description="UUID of the newly created task.")
     title: str = Field(
         ..., description="Title of the task.", min_length=3, max_length=120
     )
@@ -62,6 +62,20 @@ def route():
     return {"message": "all good"}
 
 
+@app.get("/tasks")
+def route(
+    status: Optional[TaskStatus] = Query(None, description="Filter tasks by status.")
+):
+    global db
+
+    if status != None:
+        return {
+            taskUUID: task for taskUUID, task in db.items() if task.status == status
+        }
+
+    return db
+
+
 @app.post("/task", response_model=DatabaseTaskModel)
 async def create_task(
     task: InputTaskModel = Body(
@@ -75,7 +89,8 @@ async def create_task(
 ):
     global db
 
-    dbTask = DatabaseTaskModel(**task.dict())
+    dbTask = DatabaseTaskModel(**task.dict(), uuid=uuid.uuid1())
+    print(dbTask)
     if dbTask.uuid not in db:
         db.update({dbTask.uuid: dbTask})
         return dbTask
