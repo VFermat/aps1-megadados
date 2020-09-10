@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Dict, Optional, List
 
 import uvicorn
-from fastapi import Body, FastAPI, Query, Response, status
+from fastapi import Body, FastAPI, Query, Response, status, Path
 from pydantic import UUID1, BaseModel, Field, ValidationError, validator
 
 
@@ -62,7 +62,7 @@ class UpdateTaskOut(BaseModel):
 
 app = FastAPI(
     title="Nollo CRUD",
-    description="CRUD Simples para a APS1 da disciplina de Megadados.",
+    description="A simple CRUD constructed as part of BigData project.",
 )
 db = {}
 
@@ -96,6 +96,29 @@ def get_task(
 
     return [task for task in db.values()]
 
+@app.get(
+    "/tasks/{task_id}",
+    summary="Retrieve specific tasks",
+    description="Used to retrieve information of an specific task present on database.",
+    response_description="Task Object",
+    response_model=Optional[DatabaseTaskModel]
+)
+def get_specific_task(
+    response: Response,
+    task_id: UUID1 = Path(
+        ...,
+        description="Unique ID of the task you're retrieving",
+        example=""
+    )
+):
+    global db
+
+    if task_id in db:
+        return db[task_id]
+    
+    response.status_code = 204
+    return
+    
 
 @app.post(
     "/task",
@@ -130,7 +153,7 @@ async def create_task(
     status_code=204
 )
 async def delete_task(
-    task_id: str = Query(
+    task_id: UUID1 = Path(
         ...,
         description="Unique ID of the task you're patching",
         example=""
@@ -152,7 +175,7 @@ async def delete_task(
 )
 async def patch_task(
     response: Response,
-    task_id: str = Query(
+    task_id: UUID1 = Path(
         ...,
         description="Unique ID of the task you're patching",
         example=""
