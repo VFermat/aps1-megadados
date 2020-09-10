@@ -21,6 +21,14 @@ class InputTaskModel(BaseModel):
         ..., description="Description of the task.", min_length=3, max_length=120
     )
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "title": "Random task title",
+                "description": "Random task description"
+            }
+        }
+
 
 class DatabaseTaskModel(BaseModel):
     uuid: UUID1 = Field(..., description="UUID of the newly created task.")
@@ -33,6 +41,15 @@ class DatabaseTaskModel(BaseModel):
     status: TaskStatus = Field(
         TaskStatus.todo, description="Status of the task.")
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "uuid": "e4782a82-f38e-11ea-85fc-acde48001122",
+                "title": "Random task title",
+                "description": "Random task description",
+                "status": "todo"
+            }
+        }
 
 class UpdateTaskModel(BaseModel):
     title: Optional[str] = Field(
@@ -43,6 +60,15 @@ class UpdateTaskModel(BaseModel):
     )
     status: Optional[TaskStatus] = Field(
         TaskStatus.todo, description="New status of the task.")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "title": "Random task title",
+                "description": "Random task description",
+                "status": "todo"
+            }
+        }
 
 
 class UpdateTaskOut(BaseModel):
@@ -108,7 +134,7 @@ def get_specific_task(
     task_id: UUID1 = Path(
         ...,
         description="Unique ID of the task you're retrieving",
-        example=""
+        example="e4782a82-f38e-11ea-85fc-acde48001122"
     )
 ):
     global db
@@ -156,7 +182,7 @@ async def delete_task(
     task_id: UUID1 = Path(
         ...,
         description="Unique ID of the task you're patching",
-        example=""
+        example="e4782a82-f38e-11ea-85fc-acde48001122"
     )
 ):
     global db
@@ -178,7 +204,7 @@ async def patch_task(
     task_id: UUID1 = Path(
         ...,
         description="Unique ID of the task you're patching",
-        example=""
+        example="e4782a82-f38e-11ea-85fc-acde48001122"
     ),
     patch: UpdateTaskModel = Body(
         ...,
