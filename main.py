@@ -187,8 +187,8 @@ async def delete_task(
 ):
     global db
 
-    if UUID1(task_id) in db:
-        del db[UUID1(task_id)]
+    if task_id in db:
+        del db[task_id]
 
 
 @app.patch(
@@ -218,12 +218,12 @@ async def patch_task(
 ):
     global db
 
-    task = db.get(UUID1(task_id))
+    task = db.get(task_id)
     if task is not None:
         task = task.dict()
         task.update(**patch.dict(exclude_unset=True))
         dbTask = DatabaseTaskModel(**task)
-        db.update({UUID1(task_id): dbTask})
+        db.update({task_id: dbTask})
         return dbTask
 
     response.status_code = status.HTTP_304_NOT_MODIFIED
