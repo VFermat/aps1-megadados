@@ -94,9 +94,6 @@ class UpdateTaskOut(BaseModel):
     status: Optional[TaskStatus] = Field(
         None, description="New status of the task."
     )
-    message: Optional[str] = Field(
-        None, description="This item appears in the situation of nonexistent task with the given UUID."
-    )
 
 
 app = FastAPI(
@@ -223,9 +220,8 @@ async def delete_task(
     "/task/{task_id}",
     summary="Updates task",
     description="Updates task with given Unique Id and new fields (available fields to be updated can be found on model bellow).",
-    response_description="Either task with updated values or message showing that no task with given Unique Id was found.",
+    response_description="Task with updated values.",
     response_model=UpdateTaskOut,
-    response_model_exclude_unset=True,
     responses={
         404: {
             "description": "Task not found",
