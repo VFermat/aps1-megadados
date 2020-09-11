@@ -1,9 +1,10 @@
 import uuid
 from enum import Enum
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
 
 import uvicorn
-from fastapi import Body, FastAPI, Query, Response, status, Path
+from fastapi import Body, FastAPI, HTTPException, Path, Query, Response, status
+from fastapi.responses import JSONResponse
 from pydantic import UUID1, BaseModel, Field, ValidationError, validator
 
 
@@ -72,6 +73,17 @@ class UpdateTaskModel(BaseModel):
         }
 
 
+class Message(BaseModel):
+    message: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "message": "Task not found."
+            }
+        }
+
+
 class UpdateTaskOut(BaseModel):
     title: Optional[str] = Field(
         None, description="New title of the task."
@@ -129,7 +141,13 @@ def get_task(
     summary="Retrieve specific tasks",
     description="Used to retrieve information of an specific task present on database.",
     response_description="Task Object",
-    response_model=Optional[DatabaseTaskModel]
+    response_model=Optional[DatabaseTaskModel],
+    responses={
+        404: {
+            "description": "Task not found",
+            "model": Message
+        }
+    }
 )
 def get_specific_task(
     response: Response,
@@ -144,8 +162,7 @@ def get_specific_task(
     if task_id in db:
         return db[task_id]
 
-    response.status_code = 204
-    return
+    return JSONResponse(status_code=404, content={"message": "Task not found"})
 
 
 @app.post(
@@ -178,7 +195,13 @@ async def create_task(
     "/task/{task_id}",
     summary="Removes task",
     description="Removes task from database, based on given Unique Id. If that Unique Id does not exist on DB, nothing is done",
-    status_code=204
+    status_code=204,
+    responses={
+        404: {
+            "description": "Task not found",
+            "model": Message
+        }
+    }
 )
 async def delete_task(
     task_id: UUID1 = Path(
@@ -191,6 +214,9 @@ async def delete_task(
 
     if task_id in db:
         del db[task_id]
+        return
+
+    return JSONResponse(status_code=404, content={"message": "Task not found"})
 
 
 @app.patch(
@@ -199,7 +225,13 @@ async def delete_task(
     description="Updates task with given Unique Id and new fields (available fields to be updated can be found on model bellow).",
     response_description="Either task with updated values or message showing that no task with given Unique Id was found.",
     response_model=UpdateTaskOut,
-    response_model_exclude_unset=True
+    response_model_exclude_unset=True,
+    responses={
+        404: {
+            "description": "Task not found",
+            "model": Message
+        }
+    }
 )
 async def patch_task(
     response: Response,
@@ -228,5 +260,4 @@ async def patch_task(
         db.update({task_id: dbTask})
         return dbTask
 
-    response.status_code = status.HTTP_304_NOT_MODIFIED
-    return {"message": f"no task with id {task_id}"}
+    return JSONResponse(status_code=404, content={"message": "Task not found"})
