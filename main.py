@@ -51,6 +51,7 @@ class DatabaseTaskModel(BaseModel):
             }
         }
 
+
 class UpdateTaskModel(BaseModel):
     title: Optional[str] = Field(
         ..., description="New title of the task.", min_length=3, max_length=120
@@ -60,7 +61,7 @@ class UpdateTaskModel(BaseModel):
     )
     status: Optional[TaskStatus] = Field(
         TaskStatus.todo, description="New status of the task.")
-    
+
     class Config:
         schema_extra = {
             "example": {
@@ -96,7 +97,7 @@ db = {}
 @app.get(
     "/test",
     summary="Healthcheck",
-    description= "Basic request to check if network is running"
+    description="Basic request to check if network is running"
 )
 def healthcheck():
     return {"message": "all good"}
@@ -122,6 +123,7 @@ def get_task(
 
     return [task for task in db.values()]
 
+
 @app.get(
     "/tasks/{task_id}",
     summary="Retrieve specific tasks",
@@ -141,10 +143,10 @@ def get_specific_task(
 
     if task_id in db:
         return db[task_id]
-    
+
     response.status_code = 204
     return
-    
+
 
 @app.post(
     "/task",
@@ -192,11 +194,11 @@ async def delete_task(
 
 
 @app.patch(
-    "/task/{task_id}", 
+    "/task/{task_id}",
     summary="Updates task",
     description="Updates task with given Unique Id and new fields (available fields to be updated can be found on model bellow).",
     response_description="Either task with updated values or message showing that no task with given Unique Id was found.",
-    response_model=UpdateTaskOut, 
+    response_model=UpdateTaskOut,
     response_model_exclude_unset=True
 )
 async def patch_task(
