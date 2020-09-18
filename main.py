@@ -113,7 +113,7 @@ def healthcheck():
 
 
 @app.get(
-    "/tasks",
+    "/task",
     summary="Retrieve tasks",
     description="Used to retrieve information of tasks present on database. You can filter the request based on the status wanted",
     response_description="List which contains all tasks based on the status wanted (all tasks created if no status sent)",
@@ -134,7 +134,7 @@ def get_task(
 
 
 @app.get(
-    "/tasks/{task_id}",
+    "/task/{task_id}",
     summary="Retrieve specific tasks",
     description="Used to retrieve information of an specific task present on database.",
     response_description="Task Object",
