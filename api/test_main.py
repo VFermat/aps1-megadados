@@ -3,7 +3,7 @@ from random import randint
 from fastapi.testclient import TestClient
 from pydantic import UUID1
 
-from main import app
+from .main import app
 
 client = TestClient(app)
 
@@ -15,9 +15,10 @@ def test_read_main_returns_not_found():
 
 
 def test_read_healthcheck_returns_ok():
-    response = client.get('/test')
+    response = client.get('/task/test')
     assert response.status_code == 200
     assert response.json() == {'message': 'all good'}
+
 
 def test_read_tasks_returns_ok():
     tasks = []
@@ -36,6 +37,7 @@ def test_read_tasks_returns_ok():
     assert len(tasks_returned) == len(tasks)
     for task in tasks:
         assert task in tasks_returned
+
 
 def test_read_task_returns_not_found():
     response = client.get(
@@ -197,7 +199,8 @@ def test_patch_task_status_returns_invalid_type():
     modified_task = response.json()
     print(modified_task)
     assert response.status_code == 422
-    assert modified_task == {'detail': [{'loc': ['body', 'status'], 'msg': "value is not a valid enumeration member; permitted: 'todo', 'doing', 'done'", 'type': 'type_error.enum', 'ctx': {'enum_values': ['todo', 'doing', 'done']}}]}
+    assert modified_task == {'detail': [{'loc': ['body', 'status'], 'msg': "value is not a valid enumeration member; permitted: 'todo', 'doing', 'done'",
+                                         'type': 'type_error.enum', 'ctx': {'enum_values': ['todo', 'doing', 'done']}}]}
 
 
 def test_patch_task_returns_not_found():
