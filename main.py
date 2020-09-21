@@ -3,7 +3,8 @@ from enum import Enum
 from typing import Dict, List, Optional
 
 import uvicorn
-from fastapi import Body, FastAPI, HTTPException, Path, Query, Response, status
+from fastapi import (Body, Depends, FastAPI, HTTPException, Path, Query,
+                     Response, status)
 from fastapi.responses import JSONResponse
 from pydantic import UUID1, BaseModel, Field, ValidationError, validator
 
@@ -100,6 +101,19 @@ app = FastAPI(
     title="Nollo CRUD",
     description="A simple CRUD constructed as part of BigData project.",
 )
+
+
+class DBSession:
+    tasks = {}
+
+    def __init__(self):
+        self.tasks = DBSession.tasks
+
+
+def get_db():
+    return DBSession()
+
+
 db = {}
 
 
@@ -121,16 +135,16 @@ def healthcheck():
 )
 def get_task(
     status: Optional[TaskStatus] = Query(
-        None, description="Filter tasks by status.")
+        None, description="Filter tasks by status."),
+    db: DBSession = Depends(get_db)
 ):
-    global db
 
     if status != None:
         return [
-            task for task in db.values() if task.status == status
+            task for task in db.tasks.values() if task.status == status
         ]
 
-    return [task for task in db.values()]
+    return [task for task in db.tasks.values()]
 
 
 @app.get(
@@ -152,12 +166,12 @@ def get_specific_task(
         ...,
         description="Unique ID of the task you're retrieving",
         example="e4782a82-f38e-11ea-85fc-acde48001122"
-    )
+    ),
+    db: DBSession = Depends(get_db)
 ):
-    global db
 
-    if task_id in db:
-        return db[task_id]
+    if task_id in db.tasks:
+        return db.tasks[task_id]
 
     return JSONResponse(status_code=404, content={"message": "Task not found"})
 
@@ -178,14 +192,14 @@ async def create_task(
             "title": "Random task title",
             "description": "Random task description",
         },
-    )
+    ),
+    db: DBSession = Depends(get_db)
 ):
-    global db
 
-    dbTask = DatabaseTaskModel(**task.dict(), uuid=uuid.uuid1())
-    if dbTask.uuid not in db:
-        db.update({dbTask.uuid: dbTask})
-        return dbTask
+    db_task = DatabaseTaskModel(**task.dict(), uuid=uuid.uuid1())
+    if db_task.uuid not in db.tasks:
+        db.tasks.update({db_task.uuid: db_task})
+        return db_task
 
 
 @app.delete(
@@ -205,12 +219,12 @@ async def delete_task(
         ...,
         description="Unique ID of the task you're deleting",
         example="e4782a82-f38e-11ea-85fc-acde48001122"
-    )
+    ),
+    db: DBSession = Depends(get_db)
 ):
-    global db
 
-    if task_id in db:
-        del db[task_id]
+    if task_id in db.tasks:
+        del db.tasks[task_id]
         return
 
     return JSONResponse(status_code=404, content={"message": "Task not found"})
@@ -244,16 +258,16 @@ async def patch_task(
             "description": "New Description",
             "status": "doing"
         }
-    )
+    ),
+    db: DBSession = Depends(get_db)
 ):
-    global db
 
-    task = db.get(task_id)
+    task = db.tasks.get(task_id)
     if task is not None:
         task = task.dict()
         task.update(**patch.dict(exclude_unset=True))
-        dbTask = DatabaseTaskModel(**task)
-        db.update({task_id: dbTask})
-        return dbTask
+        db_task = DatabaseTaskModel(**task)
+        db.tasks.update({task_id: db_task})
+        return db_task
 
     return JSONResponse(status_code=404, content={"message": "Task not found"})
