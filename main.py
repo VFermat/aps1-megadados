@@ -55,10 +55,10 @@ class DatabaseTaskModel(BaseModel):
 
 class UpdateTaskModel(BaseModel):
     title: Optional[str] = Field(
-        ..., description="New title of the task.", min_length=3, max_length=120
+        None, description="New title of the task.", min_length=3, max_length=120
     )
     description: Optional[str] = Field(
-        ..., description="New description of the task.", min_length=3, max_length=120
+        None, description="New description of the task.", min_length=3, max_length=120
     )
     status: Optional[TaskStatus] = Field(
         TaskStatus.todo, description="New status of the task.")
@@ -203,7 +203,7 @@ async def create_task(
 async def delete_task(
     task_id: UUID1 = Path(
         ...,
-        description="Unique ID of the task you're patching",
+        description="Unique ID of the task you're deleting",
         example="e4782a82-f38e-11ea-85fc-acde48001122"
     )
 ):
