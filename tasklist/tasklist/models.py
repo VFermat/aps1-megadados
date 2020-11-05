@@ -15,6 +15,11 @@ class Task(BaseModel):
         False,
         title='Shows whether the task was completed',
     )
+    user: Optional[str] = Field(
+        None,
+        title='User`s username',
+        max_length=40,
+    )
 
     class Config:
         schema_extra = {

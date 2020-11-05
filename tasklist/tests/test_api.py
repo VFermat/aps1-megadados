@@ -61,23 +61,28 @@ def test_create_and_read_some_tasks():
     expected_responses = [
         {
             'description': 'foo',
-            'completed': False
+            'completed': False,
+            'user': None
         },
         {
             'description': 'bar',
-            'completed': True
+            'completed': True,
+            'user': None
         },
         {
             'description': 'baz',
-            'completed': False
+            'completed': False,
+            'user': None
         },
         {
             'description': 'no description',
-            'completed': True
+            'completed': True,
+            'user': None
         },
         {
             'description': 'no description',
-            'completed': False
+            'completed': False,
+            'user': None
         },
     ]
 
@@ -121,13 +126,13 @@ def test_substitute_task():
     setup_database()
 
     # Create a task.
-    task = {'description': 'foo', 'completed': False}
+    task = {'description': 'foo', 'completed': False, 'user': None}
     response = client.post('/task', json=task)
     assert response.status_code == 200
     uuid_ = response.json()
 
     # Replace the task.
-    new_task = {'description': 'bar', 'completed': True}
+    new_task = {'description': 'bar', 'completed': True, 'user': None}
     response = client.put(f'/task/{uuid_}', json=new_task)
     assert response.status_code == 200
 
@@ -145,7 +150,7 @@ def test_alter_task():
     setup_database()
 
     # Create a task.
-    task = {'description': 'foo', 'completed': False}
+    task = {'description': 'foo', 'completed': False, 'user': None}
     response = client.post('/task', json=task)
     assert response.status_code == 200
     uuid_ = response.json()
