@@ -31,8 +31,8 @@ class Task(BaseModel):
 
 # pylint: disable=too-few-public-methods
 class User(BaseModel):
-    username: str = Field(
-        'username',
+    username: Optional[str] = Field(
+        None,
         title='User`s username',
         max_length=40,
     )
@@ -55,3 +55,4 @@ class User(BaseModel):
                 'last_name': 'Doe'
             }
         }
+

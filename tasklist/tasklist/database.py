@@ -18,7 +18,7 @@ class DBSession:
         self.connection = connection
 
     def read_tasks(self, completed: bool = None):
-        query = 'SELECT BIN_TO_UUID(uuid), description, completed FROM tasks'
+        query = 'SELECT BIN_TO_UUID(uuid), description, completed, user FROM tasks'
         if completed is not None:
             query += ' WHERE completed = '
             if completed:
@@ -113,7 +113,7 @@ class DBSession:
             )
             result = cursor.fetchone()
 
-        return User(first_name=result[0], last_name=result[1])
+        return User(first_name=result[0], last_name=result[1], username=username)
 
     def create_user(self, user: User):
 
@@ -141,6 +141,9 @@ class DBSession:
         self.connection.commit()
 
     def remove_user(self, username: str):
+        if not self.__user_exists(username):
+            raise KeyError()
+
         with self.connection.cursor() as cursor:
             cursor.execute(
                 'DELETE FROM users WHERE username=%s',

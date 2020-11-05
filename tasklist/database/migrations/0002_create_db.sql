@@ -12,5 +12,5 @@ CREATE TABLE tasks (
     description NVARCHAR(1024),
     completed BOOLEAN,
     user NVARCHAR(40),
-    FOREIGN KEY (user) REFERENCES users(username)
+    FOREIGN KEY (user) REFERENCES users(username) ON DELETE SET NULL
 );
