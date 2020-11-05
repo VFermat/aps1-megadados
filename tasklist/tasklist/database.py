@@ -10,7 +10,7 @@ from fastapi import Depends
 
 from utils.utils import get_config_filename, get_app_secrets_filename
 
-from .models import Task
+from .models import Task, User
 
 
 class DBSession:
@@ -97,6 +97,61 @@ class DBSession:
             cursor.execute('DELETE FROM tasks')
         self.connection.commit()
 
+    def read_user(self, username: str):
+        if not self.__user_exists(username):
+            raise KeyError()
+
+        with self.connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                SELECT first_name, last_name
+                FROM users
+                WHERE username=%s
+                ''',
+                (username, ),
+            )
+            result = cursor.fetchone()
+
+        return User(first_name=result[0], last_name=result[1])
+
+    def create_user(self, user: User):
+
+        with self.connection.cursor() as cursor:
+            cursor.execute(
+                'INSERT INTO users VALUES (%s, %s, %s)',
+                (user.username, user.first_name, user.last_name),
+            )
+        self.connection.commit()
+
+        return user.username
+
+    def replace_user(self, username: str, user: User):
+        if not self.__user_exists(username):
+            raise KeyError()
+
+        with self.connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                UPDATE users SET first_name=%s, last_name=%s
+                WHERE username=%s
+                ''',
+                (user.first_name, user.last_name, username),
+            )
+        self.connection.commit()
+
+    def remove_user(self, username: str):
+        with self.connection.cursor() as cursor:
+            cursor.execute(
+                'DELETE FROM users WHERE username=%s',
+                (username, ),
+            )
+        self.connection.commit()
+
+    def remove_all_users(self):
+        with self.connection.cursor() as cursor:
+            cursor.execute('DELETE FROM users')
+        self.connection.commit()
+
     def __task_exists(self, uuid_: uuid.UUID):
         with self.connection.cursor() as cursor:
             cursor.execute(
@@ -106,6 +161,21 @@ class DBSession:
                 )
                 ''',
                 (str(uuid_), ),
+            )
+            results = cursor.fetchone()
+            found = bool(results[0])
+
+        return found
+
+    def __user_exists(self, username: str):
+        with self.connection.cursor() as cursor:
+            cursor.execute(
+                '''
+                SELECT EXISTS(
+                    SELECT 1 FROM users WHERE username=%s
+                )
+                ''',
+                (username, ),
             )
             results = cursor.fetchone()
             found = bool(results[0])

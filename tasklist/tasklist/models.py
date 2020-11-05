@@ -23,3 +23,30 @@ class Task(BaseModel):
                 'completed': False,
             }
         }
+
+# pylint: disable=too-few-public-methods
+class User(BaseModel):
+    username: str = Field(
+        'username',
+        title='User`s username',
+        max_length=40,
+    )
+    first_name: Optional[str] = Field(
+        'User`s firstname',
+        title='User`s firstname',
+        max_length=20,
+    )
+    last_name: Optional[str] = Field(
+        'User`s lastname',
+        title='User`s lastname',
+        max_length=20,
+    )
+
+    class Config:
+        schema_extra = {
+            'example': {
+                'username': 'john_doe',
+                'first_name': 'John',
+                'last_name': 'Doe'
+            }
+        }

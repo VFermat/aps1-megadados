@@ -24,13 +24,13 @@ def setup_database():
     secrets_file_name = utils.get_admin_secrets_filename()
     utils.run_all_scripts(scripts_dir, config_file_name, secrets_file_name)
 
-
 def test_read_main_returns_not_found():
     setup_database()
     response = client.get('/')
     assert response.status_code == 404
     assert response.json() == {'detail': 'Not Found'}
 
+## --------- TASKS --------- ##
 
 def test_read_tasks_with_no_task():
     setup_database()
@@ -215,3 +215,75 @@ def test_delete_all_tasks():
     response = client.get('/task')
     assert response.status_code == 200
     assert response.json() == {}
+
+## --------- USERS --------- ##
+
+def test_substitute_user():
+    setup_database()
+
+    # Create a user.
+    user = {'username': 'john_doe', 'first_name': 'John', 'last_name': 'Doe'}
+    response = client.post('/user', json=user)
+    assert response.status_code == 200
+    username = response.json()
+
+    # Replace the user.
+    new_user = {'first_name': 'Jane', 'last_name': 'Doe'}
+    response = client.put(f'/user/{username}', json=new_user)
+    assert response.status_code == 200
+
+    # Check whether the user was replaced.
+    response = client.get(f'/user/{username}')
+    assert response.status_code == 200
+    assert response.json() == new_user
+
+    # Delete the user.
+    response = client.delete(f'/user/{username}')
+    assert response.status_code == 200
+
+def test_alter_user():
+    setup_database()
+
+    # Create a user.
+    user = {'username': 'john_doe', 'first_name': 'John', 'last_name': 'Doe'}
+    response = client.post('/user', json=user)
+    assert response.status_code == 200
+    username = response.json()
+
+    # Replace the user.
+    new_user_partial = {'first_name': 'Jane'}
+    response = client.patch(f'/user/{username}', json=new_user_partial)
+    assert response.status_code == 200
+
+    # Check whether the user was altered.
+    response = client.get(f'/user/{username}')
+    assert response.status_code == 200
+    assert response.json() == {**user, **new_user_partial}
+
+    # Delete the task.
+    response = client.delete(f'/task/{username}')
+    assert response.status_code == 200
+
+def test_read_invalid_user():
+    setup_database()
+
+    response = client.get('/user/1')
+    assert response.status_code == 422
+
+def test_read_nonexistant_user():
+    setup_database()
+
+    response = client.get('/user/random_user')
+    assert response.status_code == 404
+
+def test_delete_invalid_user():
+    setup_database()
+
+    response = client.delete('/user/1')
+    assert response.status_code == 422
+
+def test_delete_nonexistant_user():
+    setup_database()
+
+    response = client.delete('/user/random_user')
+    assert response.status_code == 404
